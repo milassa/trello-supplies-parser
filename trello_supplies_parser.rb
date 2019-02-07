@@ -39,7 +39,7 @@ def authorize
 end
 
 # Use Trello API documentation instructions to get your own Key and token.
-url = 'https://api.trello.com/1/boards/bsjhgc2U/cards?fields=name,desc,idMembersVoted,idList=5c3f0ab4d18b616162e85ef2&key=yourkey&token=yourtoken'
+url = 'https://api.trello.com/1/boards/bsjhgc2U/cards?fields=name,desc,idMembersVoted,idList&key=yourkey&token=yourtoken'
 uri = URI(url)
 
 http = Net::HTTP.new(uri.host, uri.port)
@@ -52,13 +52,17 @@ response = http.request(request)
 parsed = JSON.parse(response.read_body)
 
 values = []
+parsed.each do |elem|
+	values.push( [0, elem['name'], elem['desc'], elem['idMembersVoted'].length ] ) if elem['idList'] == '5c3f0ab4d18b616162e85ef2'
+end
+
 values = values.sort do |a,b|
 	b[3] <=> a[3]
 end
 
 counter = 0
-parsed.each do |elem|
-	values.push( [counter += 1, elem['name'], elem['desc'], elem['idMembersVoted'].length ] )
+values.each do |elem|
+	elem [0] = counter += 1
 end
 
 # Initialize the API.
