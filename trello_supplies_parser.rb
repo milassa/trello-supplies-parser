@@ -53,7 +53,8 @@ parsed = JSON.parse(response.read_body)
 
 values = []
 parsed.each do |elem|
-	values.push( [0, elem['name'], elem['desc'], elem['idMembersVoted'].length ] ) if elem['idList'] == '5c3f0ab4d18b616162e85ef2'
+	values.push( [0, elem['name'], elem['desc'], elem['idMembersVoted'].length ] )
+	if elem['idList'] == '5c3f0ab4d18b616162e85ef2'
 end
 
 values = values.sort do |a,b|
@@ -65,18 +66,30 @@ values.each do |elem|
 	elem [0] = counter += 1
 end
 
-# Initialize the API.
+# Initialize the API
 service = Google::Apis::SheetsV4::SheetsService.new
 service.client_options.application_name = APPLICATION_NAME
 service.authorization = authorize
 
 range_name = 'A3'
-value_range_object = Google::Apis::SheetsV4::ValueRange.new(range: range_name, values: values)
-
 spreadsheet_id = '1bKAArbLZevkexeWMMoX1Um2wBCUCgjrIiIdrIWKE47U'
+
+value_range = Google::Apis::SheetsV4::ValueRange.new(values: [[0]])
+result = service.append_spreadsheet_value(spreadsheet_id,
+					  range_name,
+					  value_range,
+					  value_input_option: 'RAW')
+
+last_cell = result.updates.updated_range.split('!')[1].split(//,2)[1].to_i
+first_cell = range_name.split(//,2)[1].to_i
+num_add = last_cell - first_cell - values.length
+if num_add > 0
+	values.concat([['','','','']] * num_add)
+end
+
+value_range_object = Google::Apis::SheetsV4::ValueRange.new(range: range_name, values: values)
 result = service.update_spreadsheet_value(spreadsheet_id,
                                           range_name,
                                           value_range_object,
                                           value_input_option: 'RAW')
-
 puts "#{result.updated_cells} cells updated."
